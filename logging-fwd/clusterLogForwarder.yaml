@@ -1,0 +1,32 @@
+apiVersion: observability.openshift.io/v1
+kind: ClusterLogForwarder
+metadata:
+  name: logging
+  namespace: elastic
+spec:
+  managementState: Managed
+  outputs:
+    - elasticsearch:
+        authentication:
+          password:
+            key: password
+            secretName: elasticsearch-credentials
+          username:
+            secretName: elasticsearch-credentials
+            key: username
+        url: 'https://elasticsearch/'
+        version: 8
+        index: openshift
+      type: elasticsearch
+      name: elastic-output
+      tls:
+        insecureSkipVerify: true
+  pipelines:
+    - inputRefs:
+        - application
+        - infrastructure
+      outputRefs:
+        - elastic-output
+      name: send-all-to-elastic
+  serviceAccount:
+    name: logging-fwd
