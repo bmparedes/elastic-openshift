@@ -1,0 +1,10 @@
+# Ejemplo de Role para permisos de recolección de logs
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: log-collector-role
+  namespace: elastic
+rules:
+- apiGroups: [""]
+  resources: ["pods", "namespaces", "nodes"]
+  verbs: ["get", "list", "watch"]

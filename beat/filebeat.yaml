@@ -1,0 +1,60 @@
+apiVersion: beat.k8s.elastic.co/v1beta1
+kind: Beat
+metadata:
+  name: filebeat
+  namespace: elastic
+spec:
+  config:
+    filebeat.autodiscover:
+      providers:
+        - type: kubernetes
+          node: '${NODE_NAME}'
+          hints:
+            enabled: true
+            default_config:
+              type: filestream
+              id: 'kubernetes-container-logs-${data.kubernetes.pod.name}-${data.kubernetes.container.id}'
+              paths:
+                - '/var/log/containers/*${data.kubernetes.container.id}.log'
+              prospector:
+                scanner:
+                  fingerprint.enabled: true
+                  symlinks: true
+  kibanaRef:
+    name: kibana
+    namespace: elastic
+  elasticsearchRef:
+    name: elasticsearch
+    namespace: elastic
+  daemonSet:
+    podTemplate:
+      spec:
+        serviceAccountName: filebeat
+        automountServiceAccountToken: true
+        terminationGracePeriodSeconds: 30
+        dnsPolicy: ClusterFirstWithHostNet
+        hostNetwork: true
+        containers:
+          - name: filebeat
+            securityContext:
+              runAsUser: 0
+              privileged: true
+            volumeMounts:
+              - name: varlogcontainers
+                mountPath: /var/log/containers
+              - name: varlogpods
+                mountPath: /var/log/pods
+            env:
+              - name: NODE_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+        volumes:
+          - name: varlogcontainers
+            hostPath:
+              path: /var/log/containers
+          - name: varlogpods
+            hostPath:
+              path: /var/log/pods
+  type: filebeat
+  version: 9.0.0

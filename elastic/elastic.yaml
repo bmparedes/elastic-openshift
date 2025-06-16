@@ -1,0 +1,40 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elasticsearch
+  namespace: elastic
+spec:
+  nodeSets:
+    - config:
+        node.attr.attr_name: attr_value
+        node.roles:
+          - master
+          - data
+        node.store.allow_mmap: false
+      count: 1
+      name: default
+      podTemplate:
+        metadata:
+          creationTimestamp: null
+        spec:
+          containers:
+            - name: elasticsearch
+              resources:
+                limits:
+                  cpu: '2'
+                  memory: 3Gi
+                requests:
+                  cpu: '1'
+                  memory: 3Gi
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 300Gi
+            storageClassName: ocs-storagecluster-ceph-rbd
+  volumeClaimDeletePolicy: DeleteOnScaledownAndClusterDeletion
+  version: 9.0.0
